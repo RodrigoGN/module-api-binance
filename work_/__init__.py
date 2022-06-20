@@ -23,7 +23,7 @@ class Worker(Thread):
     def run(self):
         self.event.wait()
         task_coin = self.queue.get()
-        print(f"\n{self.name}\n{task_coin}")
+        # print(f"\n{self.name}\n{task_coin}")
         self._target(task_coin)
         self._stoped = True
         

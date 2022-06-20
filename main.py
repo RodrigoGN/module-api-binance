@@ -24,21 +24,32 @@ async def conexao(args, metod="bookTicker"):
         else:
             await ws.send(json.dumps({"method": "SUBSCRIBE", "params": [f"{args.lower()}@ticker"], "id": 1}))
         while True:
-            msg = json.loads(await ws.recv())
-            if 'a' in msg:
-                coinPrice[msg['s']] = {'Ask': msg['a'], 'Bid': msg['b']}
-                print(coinPrice)
-                if len(coinPrice) == len(args):
-                    sleep(1)
-                    fila, event = get_task(coins)
-                    thrs = get_pool(len(coins), target=startTrade, queue=fila, event=event)
+            try:
+                msg = json.loads(await ws.recv())
+                if 'a' in msg:
+                    coinPrice[msg['s']] = {'Ask': msg['a'], 'Bid': msg['b']}
+                    print(coinPrice)
+                    fila, event = get_task([i for i in coinPrice.keys()])
+                    thrs = get_pool(len(coinPrice), target=startTrade, queue=fila, event=event)
                     [th.start() for th in thrs]
                     [th.join() for th in thrs]
+            except Exception as e:
+                print(f"\n{e}\n")
+                break
 
 
-def startTrade():
+def startTrade(coin):
     '''Adicionar aqui suas regras de negócio'''
-    pass
+    
+    '''exemplo de compra'''
+    if float(coinPrice[str(coin)]['Ask']) > (float(coinPrice[str(coin)]['Bid']) * 1.01):
+        print(f'\nBuy: {coin}\n')
+        
+    '''exemplo de venda'''
+    if float(coinPrice[str(coin)]['Ask']) < (float(coinPrice[str(coin)]['Bid']) * 0.99):
+        print(f'\nSell: {coin}\n')
+    
 
 if __name__ == "__main__":
-    asyncio.run(conexao(coins, metod="bookTicker"))
+    while True:
+        asyncio.run(conexao(coins, metod="bookTicker"))
